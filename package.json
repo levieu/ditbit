@@ -1,0 +1,10 @@
+{
+	"name": "ditbit",
+	"version": "1.0.0",
+	"description" : "app to manage money",
+	"author" : "Leonetti Vito <veleonetti@gmail.com>",
+	"contributors" : [],
+  	"dependencies" : [],
+  	"repository" : {"type": "git", "url": "https://github.com/levieu/ditbit.git"},
+	"main" : "ditbit.js"
+}
