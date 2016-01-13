@@ -7,7 +7,10 @@ CollectionDriver = function(db) {
 CollectionDriver.prototype.getCollection = function(collectionName, callback) {
   this.db.collection(collectionName, function(error, the_collection) {
     if( error ) callback(error);
-    else callback(null, the_collection);
+    else {
+        console.log("THE COLLECTION: " + the_collection);
+        callback(null, the_collection);
+    }
   });
 };
 
@@ -39,7 +42,7 @@ CollectionDriver.prototype.get = function(collectionName, id, callback) { //A
 
 CollectionDriver.prototype.save = function(collectionName, obj, callback) {
     this.getCollection(collectionName, function(error, the_collection) { //A
-      if( error ) callback(error)
+      if( error ) callback(error);
       else {
         obj.created_at = new Date(); //B
         the_collection.insert(obj, function() { //C
