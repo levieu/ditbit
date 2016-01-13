@@ -64,7 +64,7 @@ MovementService.prototype.update = function(objData, callback) {
             callback(err, objResponse);
         }
         else{
-            console.log("Find correct! --> " + updMov);
+            console.log("Update correct! --> " + updMov);
             console.log("Update id PRE! --> " + objData._id);
             console.log("Update id POST! --> " + updMov._id);
             objResponse.esito = 'OK';
