@@ -4,6 +4,9 @@ var http = require("http"),
     mongoose = require('mongoose'),
     MovementService = require('./service/MovementService').MovementService;
 
+var listServices = {};
+
+
 var app = express();
 
 //parser per le richieste in arrivo
@@ -103,6 +106,35 @@ app.put('/ditbit/movement', function(req, res) {
     console.log("########### update movement - END ###########");
 });
 
+app.post('/ditbit/services', function(req, res) {
+    console.log("########### post movement - START ###########");
+
+    console.log("----- REQUEST START -----");
+    var objectRequest = JSON.parse(req.body.data);
+    var nameService = objectRequest.service;
+    var nameMethod = objectRequest.method;
+    console.log("request data --> "+ JSON.stringify(objectRequest));
+    console.log("----- REQUEST END -----");
+
+    var objectService = listServices[nameService];
+    var objectServicePrototype = objectService['prototype'];
+    console.log("----- RESPONSE START -----");
+    objectServicePrototype[nameMethod](objectRequest, function(error, objectResponse) {
+        var strResponse = JSON.stringify(objectResponse);
+        console.log("esito --> " + strResponse);
+        res.setHeader('Content-Type','application/json');
+        if (objectResponse.esito == 'OK'){
+            res.status(200).end(strResponse);
+        }
+        else{
+            res.status(400).end(strResponse);
+        }
+    });
+    console.log("----- RESPONSE END -----");
+
+    console.log("########### post movement - END ###########");
+});
+
 app.post('/ditbit/login', function(req, res) { //A
     console.log("login --> ");
 	//var objectBody = req.body;
@@ -123,6 +155,8 @@ app.post('/ditbit/login', function(req, res) { //A
 
 http.createServer(app).listen(app.get('port'), function(){
     console.log('Express server listening on port ' + app.get('port'));
+
+    listServices['movement'] = MovementService;
 
     //open connection
     mongoose.connect('mongodb://localhost/ditbit'); //port 27017
