@@ -113,13 +113,14 @@ app.post('/ditbit/services', function(req, res) {
     var objectRequest = JSON.parse(req.body.data);
     var nameService = objectRequest.service;
     var nameMethod = objectRequest.method;
+    var data = objectRequest.data;
     console.log("request data --> "+ JSON.stringify(objectRequest));
     console.log("----- REQUEST END -----");
 
     var objectService = listServices[nameService];
     var objectServicePrototype = objectService['prototype'];
     console.log("----- RESPONSE START -----");
-    objectServicePrototype[nameMethod](objectRequest, function(error, objectResponse) {
+    objectServicePrototype[nameMethod](data, function(error, objectResponse) {
         var strResponse = JSON.stringify(objectResponse);
         console.log("esito --> " + strResponse);
         res.setHeader('Content-Type','application/json');
