@@ -2,12 +2,21 @@ var http = require("http"),
     express = require("express"),
     bodyParser = require('body-parser'),
     mongoose = require('mongoose'),
-    MovementService = require('./service/MovementService').MovementService;
+    MovementService = require('./service/MovementService').MovementService,
+    UserService = require('./service/UserService').UserService;
+
+var jwt = require('jsonwebtoken');  //https://npmjs.org/package/node-jsonwebtoken
+var expressJwt = require('express-jwt'); //https://npmjs.org/package/express-jwt
 
 var listServices = {};
 
+var secret = new Date().getUTCMilliseconds().toString();
 
 var app = express();
+
+// We are going to protect /api routes with JWT
+app.use('/ditbit/services', expressJwt({secret: secret}));
+app.use('/ditbit/movement', expressJwt({secret: secret}));
 
 //parser per le richieste in arrivo
 app.use(bodyParser.json() );       // to support JSON-encoded bodies
@@ -18,7 +27,7 @@ app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
 //cross-domain
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With,     Content-Type, Accept");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Headers, Authorization");
   res.header("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS");
   next();
 });
@@ -27,84 +36,7 @@ app.use(function(req, res, next) {
 app.set('port', process.env.port || 3000);
 
 var movementService = new MovementService;
-
-app.get('/ditbit/movement', function(req, res) {
-    console.log("########### get movement - START ###########");
-
-    console.log("----- REQUEST START -----");
-    var objectRequest = {};
-    //if (req.body.data != null)
-        //objectRequest = JSON.parse(req.body.data);
-    //objectRequest.tipoOperazione = 'O';
-    console.log("request data --> "+ JSON.stringify(objectRequest));
-    console.log("----- REQUEST END -----");
-
-    console.log("----- RESPONSE START -----");
-    movementService.find(objectRequest, function(error, objectResponse) {
-        var strResponse = JSON.stringify(objectResponse);
-        console.log("esito --> " + strResponse);
-        res.setHeader('Content-Type','application/json');
-        if (objectResponse.esito == 'OK'){
-            res.status(200).end(strResponse);
-        }
-        else{
-            res.status(400).end(strResponse);
-        }
-    });
-
-    //res.setHeader('Content-Type','application/json'); //G
-    //res.end(JSON.stringify(objs))
-    console.log("----- RESPONSE END -----");
-    console.log("########### get movement - END ###########");
-});
-
-app.post('/ditbit/movement', function(req, res) {
-    console.log("########### post movement - START ###########");
-
-    console.log("----- REQUEST START -----");
-    var objectRequest = JSON.parse(req.body.data);
-    console.log("request data --> "+ JSON.stringify(objectRequest));
-    console.log("----- REQUEST END -----");
-
-    console.log("----- RESPONSE START -----");
-    movementService.save(objectRequest, function(error, objectResponse) {
-        var strResponse = JSON.stringify(objectResponse);
-        console.log("esito --> " + strResponse);
-        res.setHeader('Content-Type','application/json');
-        if (objectResponse.esito == 'OK'){
-            res.status(200).end(strResponse);
-        }
-        else{
-            res.status(400).end(strResponse);
-        }
-    });
-    console.log("----- RESPONSE END -----");
-    console.log("########### post movement - END ###########");
-});
-
-app.put('/ditbit/movement', function(req, res) {
-    console.log("########### update movement - START ###########");
-
-    console.log("----- REQUEST START -----");
-    var objectRequest = JSON.parse(req.body.data);
-    console.log("request data --> "+ JSON.stringify(objectRequest));
-    console.log("----- REQUEST END -----");
-
-    console.log("----- RESPONSE START -----");
-    movementService.update(objectRequest, function(error, objectResponse) {
-        var strResponse = JSON.stringify(objectResponse);
-        console.log("esito --> " + strResponse);
-        res.setHeader('Content-Type','application/json');
-        if (objectResponse.esito == 'OK'){
-            res.status(200).end(strResponse);
-        }
-        else{
-            res.status(400).end(strResponse);
-        }
-    });
-    console.log("----- RESPONSE END -----");
-    console.log("########### update movement - END ###########");
-});
+var userService = new UserService;
 
 app.post('/ditbit/services', function(req, res) {
     console.log("########### post movement - START ###########");
@@ -113,13 +45,14 @@ app.post('/ditbit/services', function(req, res) {
     var objectRequest = JSON.parse(req.body.data);
     var nameService = objectRequest.service;
     var nameMethod = objectRequest.method;
+    var data = objectRequest.data;
     console.log("request data --> "+ JSON.stringify(objectRequest));
     console.log("----- REQUEST END -----");
 
     var objectService = listServices[nameService];
     var objectServicePrototype = objectService['prototype'];
     console.log("----- RESPONSE START -----");
-    objectServicePrototype[nameMethod](objectRequest, function(error, objectResponse) {
+    objectServicePrototype[nameMethod](data, function(error, objectResponse) {
         var strResponse = JSON.stringify(objectResponse);
         console.log("esito --> " + strResponse);
         res.setHeader('Content-Type','application/json');
@@ -129,28 +62,78 @@ app.post('/ditbit/services', function(req, res) {
         else{
             res.status(400).end(strResponse);
         }
-    });
-    console.log("----- RESPONSE END -----");
+        console.log("----- RESPONSE END -----");
 
-    console.log("########### post movement - END ###########");
+        console.log("########### post movement - END ###########");
+    });
+
 });
 
 app.post('/ditbit/login', function(req, res) { //A
-    console.log("login --> ");
-	//var objectBody = req.body;
-	//var object = JSON.parse(req.body.data);
-	console.log("typeof req.body --> " + typeof req.body);
-	console.log("typeof req.body.data --> " + typeof req.body.data);
-	console.log("typeof req.body.username --> " + typeof req.body.username);
-	console.log("typeof req.body.password --> " + typeof req.body.password);
-	var objectReq = JSON.parse(req.body.data);
-	//var objectReq = req.body;
-	console.log("username:'" + objectReq.username + "' - password:'" + objectReq.password + "'");
+    console.log("########### LOGIN - START ###########");
+
+	var objectRequest = JSON.parse(req.body.data);
+
+	console.log("username:'" + objectRequest.username + "' - password:'" + objectRequest.password + "'");
+
+    userService.find(objectRequest, function(error, objectResponse) {
+        if (objectResponse.esito !== 'OK' || objectResponse.info.length == 0){
+            res.status(401).send('Utente o password errati!');
+            return;
+        }
+
+        var user = {};
+        user.nome = objectResponse.info.nome;
+        user.cognome = objectResponse.info.cognome;
+        user.email = objectResponse.info.email;
+        user.email = objectResponse.info.username;
+
+        // We are sending the profile inside the token
+        var token = jwt.sign(user, secret, { expiresInMinutes: 60*1 });
+
+        res.setHeader('Content-Type','application/json');
+        var objResponse = {};
+        objResponse.authenticated = true;
+        objResponse.token = token;
+        res.end(JSON.stringify(objResponse));
+
+        /*
+        var strResponse = JSON.stringify(objectResponse);
+        console.log("esito --> " + strResponse);
+        res.setHeader('Content-Type','application/json');
+        if (objectResponse.esito == 'OK'){
+            res.status(200).end(strResponse);
+        }
+        else{
+            res.status(400).end(strResponse);
+        }
+        */
+    });
+/*
+    if (!(req.body.username === 'john.doe' && req.body.password === 'foobar')) {
+        res.status(401).send('Wrong user or password');
+        return;
+    }
+
+    var profile = {
+        first_name: 'John',
+        last_name: 'Doe',
+        email: 'john@doe.com',
+        id: 123
+    };
+
+    // We are sending the profile inside the token
+    var token = jwt.sign(profile, secret, { expiresInMinutes: 60*1 });
+ */
+    //res.json({ token: token });
+/*
 	res.setHeader('Content-Type','application/json'); //G
 	var objResponse = {};
 	objResponse.authenticated = true;
+    objResponse.token = token;
 	res.end(JSON.stringify(objResponse));
-    	//res.send(200, "");
+    */
+    console.log("########### LOGIN - END ###########");
 });
 
 http.createServer(app).listen(app.get('port'), function(){
@@ -159,7 +142,7 @@ http.createServer(app).listen(app.get('port'), function(){
     listServices['movement'] = MovementService;
 
     //open connection
-    mongoose.connect('mongodb://localhost/ditbit'); //port 27017
+    mongoose.connect('mongodb://127.0.0.1/ditbit'); //port 27017
     var db = mongoose.connection;
     db.on('error', function() {
         console.log("Error! Exiting... Must start MongoDB first");
