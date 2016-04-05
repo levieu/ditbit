@@ -1,7 +1,7 @@
 /**
  * Created by v.leonetti on 12/01/2016.
  */
-var Movement = require('./../mapper/Movement').Movement;
+var Movement = require('./../mapper/Movement');
 
 MovementService = function() {
 };
@@ -74,4 +74,23 @@ MovementService.prototype.update = function(objData, callback) {
     });
 };
 
-exports.MovementService = MovementService;
+MovementService.prototype.delete = function (objData, callbackFunction){
+    var objResponse = {};
+    Movement.remove({_id:objData._id}, function (err, delBank) {
+        if (err){
+            console.log("Delete error! --> " + err);
+            objResponse.esito = 'KO';
+            objResponse.error = err;
+            callbackFunction(err, objResponse);
+        }
+        else{
+            console.log("Delete correct! --> Number of item removed " +  delBank.result.ok);
+            objResponse.esito = 'OK';
+            objResponse.info = delBank;
+            callbackFunction(null, objResponse);
+        }
+    });
+};
+
+//exports.MovementService = MovementService;
+module.exports = MovementService;

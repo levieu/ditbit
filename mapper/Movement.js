@@ -33,4 +33,5 @@ var movementSchema = new Schema({
 
 var Movement = mongoose.model('Movement', movementSchema);
 
-exports.Movement = Movement;
+//exports.Movement = Movement;
+module.exports = Movement;

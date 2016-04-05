@@ -2,8 +2,8 @@ var http = require("http"),
     express = require("express"),
     bodyParser = require('body-parser'),
     mongoose = require('mongoose'),
-    MovementService = require('./service/MovementService').MovementService,
-    UserService = require('./service/UserService').UserService;
+    MovementService = require('./service/MovementService'),
+    UserService = require('./service/UserService');
 
 var jwt = require('jsonwebtoken');  //https://npmjs.org/package/node-jsonwebtoken
 var expressJwt = require('express-jwt'); //https://npmjs.org/package/express-jwt
