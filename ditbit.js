@@ -3,14 +3,15 @@ var http = require("http"),
     bodyParser = require('body-parser'),
     mongoose = require('mongoose'),
     MovementService = require('./service/MovementService'),
-    UserService = require('./service/UserService');
+    UserService = require('./service/UserService'),
+    CategoryService = require('./service/CategoryService');
 
 var jwt = require('jsonwebtoken');  //https://npmjs.org/package/node-jsonwebtoken
 var expressJwt = require('express-jwt'); //https://npmjs.org/package/express-jwt
 
 var listServices = {};
 
-var secret = new Date().getUTCMilliseconds().toString();
+var secret = "stocazzodisecret";//new Date().getUTCMilliseconds().toString();
 
 var app = express();
 
@@ -35,8 +36,44 @@ app.use(function(req, res, next) {
 //imposto la porta del server
 app.set('port', process.env.port || 3000);
 
+/* Application REST routing */
+app.use('/ditbit/login', require('./route/loginRoute'));
+app.use('/ditbit/movement', require('./route/movementRoute'));
+app.use('/ditbit/category', require('./route/categoryRoute'));
+
 var movementService = new MovementService;
 var userService = new UserService;
+
+app.post('/ditbit/totali', function(req, res) {
+    console.log("########### post ditbit/totali - START ###########");
+
+    var objectRequest = JSON.parse(req.body.data);
+
+    movementService.totale(objectRequest, function(error, objectResponse) {
+        if (objectResponse.esito !== 'OK' || objectResponse.info.length == 0){
+            res.status(401).send('Impossibile calcolare il totale!');
+            return;
+        }
+
+        var user = {};
+        user.nome = objectResponse.info.nome;
+        user.cognome = objectResponse.info.cognome;
+        user.email = objectResponse.info.email;
+        user.email = objectResponse.info.username;
+
+        // We are sending the profile inside the token
+        var token = jwt.sign(user, secret, { expiresInMinutes: 60*1 });
+
+        res.setHeader('Content-Type','application/json');
+        var objResponse = {};
+        objResponse.authenticated = true;
+        objResponse.token = token;
+        res.end(JSON.stringify(objResponse));
+
+    });
+
+    console.log("########### post ditbit/totali - END ###########");
+});
 
 app.post('/ditbit/services', function(req, res) {
     console.log("########### post movement - START ###########");
@@ -68,7 +105,7 @@ app.post('/ditbit/services', function(req, res) {
     });
 
 });
-
+/*
 app.post('/ditbit/login', function(req, res) { //A
     console.log("########### LOGIN - START ###########");
 
@@ -96,50 +133,15 @@ app.post('/ditbit/login', function(req, res) { //A
         objResponse.authenticated = true;
         objResponse.token = token;
         res.end(JSON.stringify(objResponse));
-
-        /*
-        var strResponse = JSON.stringify(objectResponse);
-        console.log("esito --> " + strResponse);
-        res.setHeader('Content-Type','application/json');
-        if (objectResponse.esito == 'OK'){
-            res.status(200).end(strResponse);
-        }
-        else{
-            res.status(400).end(strResponse);
-        }
-        */
     });
-/*
-    if (!(req.body.username === 'john.doe' && req.body.password === 'foobar')) {
-        res.status(401).send('Wrong user or password');
-        return;
-    }
-
-    var profile = {
-        first_name: 'John',
-        last_name: 'Doe',
-        email: 'john@doe.com',
-        id: 123
-    };
-
-    // We are sending the profile inside the token
-    var token = jwt.sign(profile, secret, { expiresInMinutes: 60*1 });
- */
-    //res.json({ token: token });
-/*
-	res.setHeader('Content-Type','application/json'); //G
-	var objResponse = {};
-	objResponse.authenticated = true;
-    objResponse.token = token;
-	res.end(JSON.stringify(objResponse));
-    */
     console.log("########### LOGIN - END ###########");
 });
-
+*/
 http.createServer(app).listen(app.get('port'), function(){
     console.log('Express server listening on port ' + app.get('port'));
 
     listServices['movement'] = MovementService;
+    listServices['category'] = CategoryService;
 
     //open connection
     mongoose.connect('mongodb://127.0.0.1/ditbit'); //port 27017

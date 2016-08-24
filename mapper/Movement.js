@@ -28,7 +28,9 @@ var movementSchema = new Schema({
     tipoOperazione: String,
     tipoCarta: String,
     dataOperazione: Date,
-    dataInserimento: { type: Date, default: Date.now }
+    dataInserimento: { type: Date, default: Date.now },
+    categoria: { type: String, default: '0' },
+    verificato: { type: Boolean, default: false }
 });
 
 var Movement = mongoose.model('Movement', movementSchema);

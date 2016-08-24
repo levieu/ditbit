@@ -6,7 +6,7 @@ var User = require('./../mapper/User');
 UserService = function() {
 };
 
-UserService.prototype.find = function(objData, callback) {
+UserService.find = function(objData, callback) {
     var objResponse = {};
     User.find(objData, function (err, user) {
         if (err){

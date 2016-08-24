@@ -18,5 +18,5 @@
 	"type": "git",
 	"url": "https://github.com/levieu/ditbit.git"
   },
-  "main": "ditbit.js"
+  "main": "ditbitServer.js"
 }
