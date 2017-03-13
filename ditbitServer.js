@@ -41,10 +41,15 @@ app.listen(app.get('port'), function () {
     console.log('Express ditbit server listening on port ' + app.get('port'));
 
     //open connection
-    mongoose.connect('mongodb://127.0.0.1/ditbit'); //port 27017
+    mongoose.connect('mongodb://172.30.67.132/sampledb'); //  mongodb://127.0.0.1/ditbit - port 27017
     var db = mongoose.connection;
-    db.on('error', function() {
-        console.log("Error! Exiting... Must start MongoDB first");
+    db.on('error', function(err) {
+        if (err.message.code === 'ETIMEDOUT') {
+            console.log("Error Timeout", err);
+        }
+        else {
+            console.log("Error! Exiting... Must start MongoDB first");
+        }
         process.exit(1);
     });
     db.once('open', function() {
